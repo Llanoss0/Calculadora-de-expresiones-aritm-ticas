@@ -1,0 +1,83 @@
+package org.example;
+ 
+import java.util.Scanner;
+import java.util.Stack;
+ 
+public class Calculadora {
+ 
+   public static void main(String[] args) {
+       Scanner scanner = new Scanner(System.in);
+       System.out.println("Introduce una expresión aritmética:");
+       String expresion = scanner.nextLine();
+ 
+       try {
+           double resultado = evaluar(expresion);
+           System.out.println("Resultado: " + resultado);
+       } catch (Exception e) {
+           System.out.println("Error al evaluar la expresión: " + e.getMessage());
+       }
+   }
+ 
+   public static double evaluar(String expresion) throws Exception {
+       expresion = expresion.replaceAll("\\s", "");
+       Stack<Double> numeros = new Stack<>();
+       Stack<Character> operadores = new Stack<>();
+ 
+       for (int i = 0; i < expresion.length(); i++) {
+           char c = expresion.charAt(i);
+ 
+           if (Character.isDigit(c)) {
+               StringBuilder sb = new StringBuilder();
+               while (i < expresion.length() && (Character.isDigit(expresion.charAt(i)) || expresion.charAt(i) == '.')) {
+                   sb.append(expresion.charAt(i++));
+               }
+               i--;
+               numeros.push(Double.parseDouble(sb.toString()));
+           }
+           else if (c == '(') {
+               operadores.push(c);
+           }
+           else if (c == ')') {
+               while (operadores.peek() != '(') {
+                   numeros.push(realizarOperacion(operadores.pop(), numeros.pop(), numeros.pop()));
+               }
+               operadores.pop();
+           }
+           else if (esOperador(c)) {
+               while (!operadores.isEmpty() && precedencia(operadores.peek()) >= precedencia(c)) {
+                   numeros.push(realizarOperacion(operadores.pop(), numeros.pop(), numeros.pop()));
+               }
+               operadores.push(c);
+           }
+       }
+       while (!operadores.isEmpty()) {
+           numeros.push(realizarOperacion(operadores.pop(), numeros.pop(), numeros.pop()));
+       }
+ 
+       return numeros.pop();
+   }
+ 
+   public static double realizarOperacion(char operador, double b, double a) throws Exception {
+       switch (operador) {
+           case '+': return a + b;
+           case '-': return a - b;
+           case '*': return a * b;
+           case '/':
+               if (b == 0) throw new Exception("División por cero");
+               return a / b;
+           case '^': return Math.pow(a, b);
+           default: throw new Exception("Operador no válido: " + operador);
+       }
+   }
+   public static boolean esOperador(char c) {
+       return c == '+' || c == '-' || c == '*' || c == '/' || c == '^';
+   }
+   public static int precedencia(char operador) {
+       switch (operador) {
+           case '+': case '-': return 1;
+           case '*': case '/': return 2;
+           case '^': return 3;
+           default: return -1;
+       }
+   }
+}
